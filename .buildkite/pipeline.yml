@@ -1,0 +1,16 @@
+env:
+  VERSION: "0.1.${BUILDKITE_BUILD_NUMBER}"
+
+steps:
+  - label: ":docker: latest build"
+    command: "docker build \
+      --build-arg=\"VERSION=$$VERSION\" \
+      --cache-from ghcr.io/rscorer/${BUILDKITE_PIPELINE_SLUG}:latest \
+      -t ghcr.io/rscorer/${BUILDKITE_PIPELINE_SLUG}:$$VERSION \
+      -t ghcr.io/rscorer/${BUILDKITE_PIPELINE_SLUG}:latest ."
+    key: "build_final"
+
+  - label: ":docker: push latest build"
+    command: "docker push --all-tags ghcr.io/rscorer/${BUILDKITE_PIPELINE_SLUG}"
+    key: "push_latest"
+    depends_on: "build_final"
