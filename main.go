@@ -104,6 +104,8 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buildkite-Forgejo Webhook Bridge</title>
     <style>
         body { font-family: system-ui; max-width: 800px; margin: 50px auto; padding: 20px; }
