@@ -56,6 +56,7 @@ var (
 	buildkiteToken string
 	port           string
 	logVerbose     bool
+	host           string
 )
 
 func getEnv(key, fallback string) string {
@@ -74,6 +75,10 @@ func main() {
 	buildkiteToken = os.Getenv("BUILDKITE_TOKEN")
 	port = getEnv("WEBHOOK_PORT", "8080")
 	logVerbose = getEnv("LOG_VERBOSE", "false") == "true"
+	host = getEnv("WEBHOOK_HOST", "your-host")
+	if !strings.HasPrefix(host, "https://") {
+		host = fmt.Sprintf("http://%s:%s", host, port)
+	}
 
 	if buildkiteOrg == "" || buildkiteToken == "" {
 		log.Fatal("Error: BUILDKITE_ORG and BUILDKITE_TOKEN environment variables must be set\n" +
@@ -85,12 +90,12 @@ func main() {
 	http.HandleFunc("/", rootHandler)
 
 	log.Printf("🚀 Buildkite-Forgejo Webhook Bridge v%s", version)
-	log.Printf("📡 Listening on port %s", port)
+	log.Printf("📡 Listening on host %s", host)
 	log.Printf("🏢 Buildkite organization: %s", buildkiteOrg)
 	log.Printf("📝 Verbose logging: %v", logVerbose)
 	log.Println()
-	log.Printf("Configure Forgejo webhook to: http://your-host:%s/webhook/<pipeline-slug>", port)
-	log.Printf("Example: http://your-host:%s/webhook/my-app", port)
+	log.Printf("Configure Forgejo webhook to: %s/webhook/<pipeline-slug>", host)
+	log.Printf("Example: %s/webhook/my-app", host)
 	log.Println()
 
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
@@ -121,13 +126,13 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
     <h2>Configuration</h2>
     <ul>
         <li><strong>Buildkite Org:</strong> %s</li>
-        <li><strong>Webhook URL:</strong> <code>http://your-host:%s/webhook/&lt;pipeline-slug&gt;</code></li>
+        <li><strong>Webhook URL:</strong> <code>%s/webhook/&lt;pipeline-slug&gt;</code></li>
     </ul>
     <h2>Setup Instructions</h2>
     <ol>
         <li>Go to your Forgejo repository settings</li>
         <li>Navigate to Webhooks → Add Webhook</li>
-        <li>Set URL to: <code>http://your-host:%s/webhook/&lt;pipeline-slug&gt;</code></li>
+        <li>Set URL to: <code>%s/webhook/&lt;pipeline-slug&gt;</code></li>
         <li>Set Content Type: <code>application/json</code></li>
         <li>Select trigger: <strong>Push events</strong></li>
         <li>Save and test!</li>
@@ -139,7 +144,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
         <li><code>/webhook/&lt;pipeline-slug&gt;</code> - Webhook receiver</li>
     </ul>
 </body>
-</html>`, version, buildkiteOrg, port, port)
+</html>`, version, buildkiteOrg, host, host)
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -214,7 +219,7 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 
 func triggerBuild(pipeline, branch, commit, message string, webhook *ForgejoWebhook) error {
 	url := fmt.Sprintf("https://api.buildkite.com/v2/organizations/%s/pipelines/%s/builds", buildkiteOrg, pipeline)
-	
+
 	if logVerbose {
 		log.Printf("🔍 Debug: buildkiteOrg='%s', pipeline='%s'", buildkiteOrg, pipeline)
 		log.Printf("🔍 Debug: URL='%s'", url)
@@ -229,8 +234,8 @@ func triggerBuild(pipeline, branch, commit, message string, webhook *ForgejoWebh
 			Email: webhook.HeadCommit.Author.Email,
 		},
 		Env: map[string]string{
-			"FORGEJO_PUSHER":   webhook.Pusher.Username,
-			"FORGEJO_REPO":     webhook.Repository.FullName,
+			"FORGEJO_PUSHER":    webhook.Pusher.Username,
+			"FORGEJO_REPO":      webhook.Repository.FullName,
 			"FORGEJO_REPO_NAME": webhook.Repository.Name,
 		},
 	}
