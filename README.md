@@ -261,7 +261,7 @@ Thanks to:
 - [Forgejo](https://forgejo.org/) and [Gitea](https://about.gitea.com/) teams for building excellent self-hosted Git platforms
 - [Buildkite](https://buildkite.com/) for their flexible CI/CD platform and API
 
-## 📞 Support
+## 🚑 Support
 
 - 🐛 [Report issues](https://github.com/rscorer/buildkite-forgejo-webhook/issues)
 - 💬 [Discussions](https://github.com/rscorer/buildkite-forgejo-webhook/discussions)
